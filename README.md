@@ -1,6 +1,6 @@
 # Awesome Chocolates — Sales & Profitability Dashboard
 
-A Power BI report built end-to-end while working through [Chandoo.org's Power BI full course](https://chandoo.org/). Sample dataset (`Awesome Chocolates`), covering shipments from Jan 2023 – Mar 2025.
+A Power BI report built end-to-end while working with the Sample dataset (`Awesome Chocolates`), covering shipments from Jan 2023 – Mar 2025.
 
 ![Dashboard](dashboard.png)
 
