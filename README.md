@@ -4,7 +4,7 @@ A Power BI report built end-to-end while working through [Chandoo.org's Power BI
 
 This is a **tutorial rebuild**, not original analysis. The dataset and the report brief come from the course. What's mine is the build: the data model, every DAX measure, the theme, the layout decisions, and the fixes documented below.
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](dashboard.png)
 
 ---
 
@@ -19,7 +19,7 @@ choco-analysis-powerbi/
 └── README.md
 ```
 
-Open the `.pbix` in Power BI Desktop (free). Apply the theme via **View → Themes → Browse for themes → `Innovate.json`**.
+Open the `.pbix` in Power BI Desktop (free). Apply the theme via **View → Themes → Browse for themes → `bibg.json`**.
 
 ---
 
