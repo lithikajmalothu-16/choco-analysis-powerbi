@@ -2,7 +2,7 @@
 
 A Power BI report I built to put two Microsoft certifications into practice.
 
-I earned [Get data in Power BI] and [Get started building with Power BI] through Microsoft Learning, then wanted to find out whether I could actually build something with it rather than just pass an assessment. This is that build — a full report from raw Excel through data modeling, DAX, and layout, following [Chandoo.org's comprehensive 3 hour video course](https://youtu.be/9sEJclxSxFQ?si=SYfrYsPdjGpuqc_C) as a guide.
+After completing 2 modules of the Prepare and visualize data with Microsoft Power BI through Microsoft Learning, then wanted to find out whether I could actually build something with it rather than just pass an assessment. This is that build — a full report from raw Excel through data modeling, DAX, and layout, following [Chandoo.org's comprehensive 3 hour video course](https://youtu.be/9sEJclxSxFQ?si=SYfrYsPdjGpuqc_C) as a guide.
 
 Sample dataset, Jan 2023 – Mar 2025. The dataset and report brief are from the course. The model, every measure, the theme, and the layout are mine.
 
