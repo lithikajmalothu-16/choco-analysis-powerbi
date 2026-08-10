@@ -1,0 +1,16 @@
+{
+  "name": "Innovate",
+  "dataColors": ["#1FC3AA", "#F3564F", "#3B4B57", "#8AD4EB", "#FFCD56", "#B5B5B5"],
+  "background": "#FFFFFF",
+  "foreground": "#3B4B57",
+  "tableAccent": "#1FC3AA",
+  "visualStyles": {
+    "*": {
+      "*": {
+        "background": [{ "show": true, "color": { "solid": { "color": "#FFFFFF" } } }],
+        "border": [{ "show": true, "color": { "solid": { "color": "#E5E5E5" } }, "radius": 4 }],
+        "title": [{ "fontColor": { "solid": { "color": "#3B4B57" } }, "fontSize": 11, "alignment": "left" }]
+      }
+    }
+  }
+}
