@@ -1,43 +1,26 @@
 # Awesome Chocolates — Sales & Profitability Dashboard
 
-A Power BI report built end-to-end while working with the Sample dataset (`Awesome Chocolates`), covering shipments from Jan 2023 – Mar 2025.
+A Power BI report I built to put two Microsoft certifications into practice.
+
+I earned [CERT NAME] and [CERT NAME] through Microsoft Learn, then wanted to find out whether I could actually build something with it rather than just pass an assessment. This is that build — a full report from raw Excel through data modeling, DAX, and layout, following [Chandoo.org's Power BI course](https://chandoo.org/) as a guide.
+
+Sample dataset, Jan 2023 – Mar 2025. The dataset and report brief are from the course. The model, every measure, the theme, and the layout are mine.
 
 ![Dashboard](dashboard.png)
 
 ---
 
-## Contents
+## What it does
 
-```
-choco-analysis-powerbi/
-├── Choco analysis.pbix          # Power BI Desktop file
-├── bibg.json               # Custom report theme
-├── screenshots/
-│   └── dashboard.png
-└── README.md
-```
+A single-page executive report on a chocolate distribution business — five KPIs, year-over-year trends on revenue and volume, geographic split, order-size distribution, and top-6 rankings for products and salespeople.
 
-Open the `.pbix` in Power BI Desktop (free). Apply the theme via **View → Themes → Browse for themes → `bibg.json`**.
+Everything is cross-filtered. Clicking a product filters the salespeople; clicking a country reshapes the shipment histogram. The two CY-vs-PY trend charts are deliberately locked to a fixed 13-month window so the comparison stays stable while the rest of the page moves.
 
 ---
 
-## The report
-
-A single-page executive dashboard with five sections:
-
-| Section | Visual | Question it answers |
-|---|---|---|
-| KPI strip | Card (new card visual) | What are the headline numbers? |
-| Trend | Two line charts, CY vs PY | Are we growing or shrinking year over year? |
-| Geography | Sorted bar chart | Where does revenue come from? |
-| Shipment distribution | Histogram (binned column chart) | What size orders do we actually ship? |
-| Rankings | Two tables + treemap | Who and what drives the business? |
-
-A date-range slicer controls the page, with **Edit interactions** deliberately disabled on the two CY-vs-PY charts so they stay locked to a fixed 13-month comparison window regardless of slicer state.
-
 ## Data model
 
-Five tables in a **star schema**:
+Five tables in a star schema — `shipments` as the fact table (~25,000 rows, one row per shipment), with `calendar`, `locations`, `products`, and `people` as dimensions.
 
 ```
                   calendar
@@ -47,69 +30,23 @@ Five tables in a **star schema**:
                    people
 ```
 
-- **`shipments`** is the fact table (~25,000 rows, one row per shipment)
-- **`calendar`**, **`locations`**, **`products`**, **`people`** are dimension tables
-
-Relationships are one-to-many from each dimension to the fact, with filter propagation flowing dimension → fact.
-
-**`calendar` is marked as a date table** (Table view → right-click `calendar` → Mark as date table → `date table`). This is not optional — time-intelligence functions like `SAMEPERIODLASTYEAR` return incorrect results without it.
+`calendar` is marked as a date table, which is what makes the time-intelligence measures work correctly.
 
 ---
 
-## Power Query transformations
+## The measures that matter
 
-Three things happen before the data reaches the model:
-
-**1. Cost column (merge + arithmetic)**
-
-`shipments` has `Boxes` and `Amount` but no cost. `products` has `Cost_per_box`. To get profit, cost has to exist at the shipment grain:
-
-- Merge `shipments` with `products` on `PID` (left outer join)
-- Expand only `Cost_per_box`
-- Select `Boxes` and `Cost_per_box` → Add Column → Standard → Multiply
-- Rename the result to `Cost`, drop `Cost_per_box`
-
-Doing this in Power Query rather than DAX matters: it's a one-time load operation instead of a per-query calculation.
-
-**2. `Start of Month` column**
-
-Added to `calendar` via Add Column → Date → Month → Start of Month. Collapses every date in a month to a single value, which lets a monthly trend chart use one axis field instead of stacking Year + Month.
-
-**3. `First Name` column**
-
-Added to `people` via Add Column → Extract → Text Before Delimiter (space). Full names were too wide for the rankings table.
-
----
-
-## DAX measures
-
-### Base measures
-
-```dax
-Total Amount = SUM(shipments[Amount])
-
-Total Cost = SUM(shipments[Cost])
-
-Total Boxes = SUM(shipments[Boxes])
-
-Shipment Count = COUNTROWS(shipments)
-```
-
-`COUNTROWS` is the right tool here because one row = one shipment. The measure itself contains no filtering logic — the filter context arrives from whatever dimensions the visual puts on it, propagated through the relationships.
-
-### Composite measures
+**Profit required a Power Query step first.** `shipments` has revenue but no cost; `products` has cost per box. I merged the two on `PID`, multiplied `Boxes × Cost_per_box`, and dropped everything else — so cost exists at shipment grain before the model ever loads.
 
 ```dax
 Total Profit = [Total Amount] - [Total Cost]
 
 Profit % = DIVIDE([Total Profit], [Total Amount])
-
-Amount per Box = DIVIDE([Total Amount], [Total Boxes])
 ```
 
-`DIVIDE` instead of the `/` operator. When a slicer narrows the data far enough that the denominator hits zero or blank — a specific salesperson in a country they never shipped to — `/` throws an error and `DIVIDE` returns blank. Blank can then be excluded from conditional formatting; an error can't.
+`DIVIDE` over `/` because slicing down to a salesperson-country combination with no shipments produces a zero denominator. `DIVIDE` returns blank; `/` throws.
 
-### Time intelligence
+**Year-over-year comparison:**
 
 ```dax
 PY Amount =
@@ -117,91 +54,44 @@ CALCULATE(
     [Total Amount],
     SAMEPERIODLASTYEAR(calendar[cal_date])
 )
-
-Total Boxes PY =
-CALCULATE(
-    [Total Boxes],
-    SAMEPERIODLASTYEAR(calendar[cal_date])
-)
 ```
 
-`CALCULATE` evaluates an expression under a modified filter context. `SAMEPERIODLASTYEAR` shifts the date context back exactly one year. Together: "compute Total Amount, but as of twelve months ago."
-
-### Variance with blank handling
+**Variance, with the blank trap handled:**
 
 ```dax
 Amount Variance =
 VAR TA_LY = [PY Amount]
 RETURN
-    IF(
-        ISBLANK(TA_LY),
-        BLANK(),
-        [Total Amount] - TA_LY
-    )
+    IF(ISBLANK(TA_LY), BLANK(), [Total Amount] - TA_LY)
 ```
 
-Without the `ISBLANK` guard, the first twelve months of data show a variance equal to the full current-year value — because Power BI treats the blank prior-year figure as zero and subtracts it. That reads as a catastrophic year-over-year collapse when the truth is simply that no prior-year data exists yet.
-
-`VAR` / `RETURN` also means `[PY Amount]` is evaluated once instead of twice.
+Without the `ISBLANK` guard, the first twelve months show a variance equal to the full current-year figure — Power BI treats the missing prior year as zero. It reads as a total collapse when the real answer is "no data yet."
 
 ---
 
-## Report-building techniques used
+## Concepts applied
 
-### Sort by column
-`month_name` sorts alphabetically by default — April, August, December, February. Fixed via Column tools → **Sort by column** → `Month_num`. Applies globally: every visual, slicer, and axis using `month_name` inherits the correct chronological order.
-
-### Binning (grouping)
-The shipment distribution histogram plots ~1,000 distinct box counts, which is unreadable. Right-click `Boxes` → **New group** → bin size 25. Creates a `Boxes (bins)` column that buckets shipments into 25-box ranges.
-
-### Top N filters
-Rankings tables use **Filter pane → Filter type: Top N → Top 6 by Total Amount**. This is dynamic: click a month in another visual and the Top 6 recalculates for that month.
-
-### Filter pane vs. slicers
-Both filter. The difference is screen real estate and intent:
-- **Slicer** — a visible control the reader is meant to use
-- **Filter pane** — a constraint applied without consuming canvas space
-
-The 13-month window on the trend charts lives in the filter pane. The date range lives in a slicer.
-
-### Edit interactions
-Format ribbon → **Edit interactions**. Controls whether selecting in visual A filters, highlights, or ignores visual B.
-
-
-### Conditional formatting — data bars
-Cell elements → Data bars → `fx` (Advanced controls). Key settings:
-- **Minimum / Maximum** must be set to `Custom` when the auto-scale hides differences. Six salespeople between 54% and 59% render as six identical bars on an auto scale.
-- **Negative bar color** set separately from positive. Products at −35% profit need a red bar extending from a visible baseline, not an invisible sliver.
-- Setting Maximum above the true max (e.g. `1.5` for a 0–1 range) keeps the bar from consuming the whole column and colliding with the number.
-
-
-### Measure-based titles
-The `fx` button next to a visual title accepts a measure. Write a measure that returns a sentence, bind it to the title, and the title recalculates as the reader interacts — turning a static label into a running narrative.
-
-### Custom theme (JSON)
-`Innovate.json` sets `dataColors`, `background`, `foreground`, and `tableAccent` globally. Applied via View → Themes → Browse for themes.
-
-Important limitation: **any color set manually on a visual overrides the theme.** After importing a theme, hand-formatted visuals must be reset (Format pane → `...` → Reset to default) before they'll inherit it.
+Power Query merges and derived columns · star schema modeling and filter propagation · `CALCULATE` and filter context · time intelligence · `COUNTROWS`, `DIVIDE`, `VAR`/`RETURN` · sort-by-column · binning for histograms · Top N filters · filter pane vs. slicers · Edit interactions · conditional formatting with custom bar scales · Image URL data category · custom theme JSON
 
 ---
 
-## Findings
+## What I'd fix next
 
-> Fill this section in with your own verified numbers before publishing.
+- Add a bottom-6 view — underperformers are usually the more actionable list
+- Add a "top 6 as % of total" measure so the rankings show concentration, not just order
+- Subtitles on each visual naming the dimension being sliced
 
-Spot-checked at May 2024:
+---
 
-| Metric | CY | PY | Δ |
-|---|---|---|---|
-| Amount | $3.88M | $4.88M | −20.5% |
-| Boxes | 236,818 | 302,159 | −21.6% |
+## Files
 
-Revenue and volume move together, which points to a units problem rather than a pricing one. 
-Product-level profitability is bimodal: the best products clear 90% margin while several run negative.
+| File | What it is |
+|---|---|
+| `Choco analysis.pbix` | The report (open in Power BI Desktop) |
+| `bibg.json` | Custom theme — apply via View → Themes → Browse |
+| `sample-chocolate-shipments-data.xlsx` | Source data |
+| `dashboard.png` | Screenshot |
 
+---
 
-## Credits
-
-Dataset:  Is uploaded in the files section. 
-
-Built by [Lithika Jadav](https://github.com/lithikajmalothu-16).
+Built by [Lithika Jadav](https://github.com/lithikajmalothu-16) · Dataset and course from [Chandoo.org](https://youtu.be/9sEJclxSxFQ?si=SYfrYsPdjGpuqc_C)
