@@ -37,8 +37,6 @@ A single-page executive dashboard with five sections:
 
 A date-range slicer controls the page, with **Edit interactions** deliberately disabled on the two CY-vs-PY charts so they stay locked to a fixed 13-month comparison window regardless of slicer state.
 
----
-
 ## Data model
 
 Five tables in a **star schema**:
