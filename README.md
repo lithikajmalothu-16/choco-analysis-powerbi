@@ -204,6 +204,6 @@ Product-level profitability is bimodal: the best products clear 90% margin while
 
 ## Credits
 
-Dataset:  
+Dataset:  Is uploaded in the files section. 
 
 Built by [Lithika Jadav](https://github.com/lithikajmalothu-16).
