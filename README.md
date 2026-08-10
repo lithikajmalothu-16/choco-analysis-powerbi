@@ -2,8 +2,6 @@
 
 A Power BI report built end-to-end while working through [Chandoo.org's Power BI full course](https://chandoo.org/). Sample dataset (`Awesome Chocolates`), covering shipments from Jan 2023 – Mar 2025.
 
-This is a **tutorial rebuild**, not original analysis. The dataset and the report brief come from the course. What's mine is the build: the data model, every DAX measure, the theme, the layout decisions, and the fixes documented below.
-
 ![Dashboard](dashboard.png)
 
 ---
@@ -12,8 +10,8 @@ This is a **tutorial rebuild**, not original analysis. The dataset and the repor
 
 ```
 choco-analysis-powerbi/
-├── ChocoAnalysis.pbix          # Power BI Desktop file
-├── Innovate.json               # Custom report theme
+├── Choco analysis.pbix          # Power BI Desktop file
+├── bibg.json               # Custom report theme
 ├── screenshots/
 │   └── dashboard.png
 └── README.md
